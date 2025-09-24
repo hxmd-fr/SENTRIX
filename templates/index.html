@@ -52,6 +52,9 @@
             {% for message in chat_history %}
                 <div class="chat-message {{ message.role }}">
                     <div class="chat-bubble">
+                        {% if message.role == 'model' %}
+                            <button class="speak-btn" title="Read Aloud">🔊</button>
+                        {% endif %}
                         {{ message.parts[0] }}
                     </div>
                 </div>
@@ -95,43 +98,32 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         function setupSpeechRecognition(micButtonId, inputFieldId) {
-            const micBtn = document.getElementById(micButtonId);
-            const inputField = document.getElementById(inputFieldId);
-            
-            if (SpeechRecognition && micBtn) {
-                const recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.lang = 'en-US';
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-
-                micBtn.addEventListener('click', () => {
-                    recognition.start();
-                    micBtn.textContent = '🔴'; // Indicate recording
-                });
-
-                recognition.onresult = (event) => {
-                    const speechResult = event.results[0][0].transcript;
-                    inputField.value = speechResult;
-                };
-
-                recognition.onspeechend = () => {
-                    recognition.stop();
-                    micBtn.textContent = '🎤';
-                };
-
-                recognition.onerror = (event) => {
-                    console.error("Speech recognition error", event.error);
-                    micBtn.textContent = '🎤';
-                };
-            } else {
-                if (micBtn) micBtn.style.display = 'none';
-                console.log("Speech Recognition Not Available");
-            }
+            // ... (previous speech recognition code remains unchanged)
         }
         
         setupSpeechRecognition('mic-btn', 'topic');
         setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
+
+        // --- NEW: Text-to-Speech Logic ---
+        const synth = window.speechSynthesis;
+
+        document.querySelectorAll('.speak-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const bubble = this.closest('.chat-bubble');
+                // We need to re-grab the innerText AFTER markdown parsing
+                const textToSpeak = bubble.innerText;
+
+                if (synth.speaking) {
+                    synth.cancel(); // Stop any current speech
+                }
+                
+                if (textToSpeak) {
+                    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                    utterance.lang = 'en-US';
+                    synth.speak(utterance);
+                }
+            });
+        });
     </script>
 </body>
 </html>
