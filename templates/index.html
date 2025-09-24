@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explain It To Me</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Explain It To Me 💡</h1>
+        
+        {% if not chat_history %}
+        <p class="subtitle">Enter a topic, upload an image, or paste a URL to have it explained.</p>
+        
+        <form id="main-form" action="/" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="new_topic_form" value="true">
+            
+            <label for="topic">Enter a Topic:</label>
+            <div class="input-with-mic">
+                <input type="text" id="topic" name="topic" placeholder="e.g., Quantum Physics...">
+                <button type="button" id="mic-btn" class="mic-btn">🎤</button>
+            </div>
+
+            <label for="image_file">Or Upload Image:</label>
+            <input type="file" id="image_file" name="image_file" accept="image/*">
+            
+            <label for="url">Or Explain a Webpage URL:</label>
+            <input type="url" id="url" name="url" placeholder="https://en.wikipedia.org/wiki/...">
+            
+            <label>Explain it like I'm a:</label>
+            <div class="difficulty-options">
+                <input type="radio" id="kid" name="difficulty" value="5-year-old child" checked>
+                <label for="kid">5-Year-Old</label>
+                <input type="radio" id="teenager" name="difficulty" value="teenager">
+                <label for="teenager">Teenager</label>
+                <input type="radio" id="expert" name="difficulty" value="college student studying the topic">
+                <label for="expert">College Student</label>
+            </div>
+            
+            <button type="submit">Explain!</button>
+        </form>
+        {% endif %}
+
+        <div id="loader" class="loader" style="display: none;"></div>
+        
+        <div class="chat-container">
+            {% for message in chat_history %}
+                <div class="chat-message {{ message.role }}">
+                    <div class="chat-bubble">
+                        {{ message.parts[0] }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if chat_history %}
+        <form id="follow-up-form" class="follow-up-form" action="/" method="POST">
+            <input type="hidden" name="follow_up_form" value="true">
+            <div class="input-with-mic">
+                <input type="text" id="follow-up-input" name="follow_up" placeholder="Ask a follow-up question..." required>
+                <button type="button" id="follow-up-mic-btn" class="mic-btn">🎤</button>
+            </div>
+            <button type="submit">→</button>
+        </form>
+        <a href="/" class="start-new-btn">Start New Topic</a>
+        {% endif %}
+        
+    </div>
+
+    <script>
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                document.getElementById('loader').style.display = 'block';
+            });
+        });
+
+        document.querySelectorAll('.chat-bubble').forEach(bubble => {
+            let rawMarkdown = bubble.innerText;
+            rawMarkdown = rawMarkdown.replace(/ \* /g, '\n* ');
+            rawMarkdown = rawMarkdown.replace(/ (\d+)\. /g, '\n$1. ');
+            bubble.innerHTML = marked.parse(rawMarkdown);
+        });
+
+        const chatContainer = document.querySelector('.chat-container');
+        if(chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // --- Voice-to-Text Logic ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function setupSpeechRecognition(micButtonId, inputFieldId) {
+            const micBtn = document.getElementById(micButtonId);
+            const inputField = document.getElementById(inputFieldId);
+            
+            if (SpeechRecognition && micBtn) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                micBtn.addEventListener('click', () => {
+                    recognition.start();
+                    micBtn.textContent = '🔴'; // Indicate recording
+                });
+
+                recognition.onresult = (event) => {
+                    const speechResult = event.results[0][0].transcript;
+                    inputField.value = speechResult;
+                };
+
+                recognition.onspeechend = () => {
+                    recognition.stop();
+                    micBtn.textContent = '🎤';
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                    micBtn.textContent = '🎤';
+                };
+            } else {
+                if (micBtn) micBtn.style.display = 'none';
+                console.log("Speech Recognition Not Available");
+            }
+        }
+        
+        setupSpeechRecognition('mic-btn', 'topic');
+        setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
+    </script>
+</body>
+</html>
