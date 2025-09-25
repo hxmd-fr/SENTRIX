@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTRIX - ELI5</title>
+    <title>Explain It To Me</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>SENTRIX - ELI5 💡</h1>
+        <h1>Explain It To Me 💡</h1>
         
         {% if not chat_history %}
         <p class="subtitle">Enter a topic, upload an image, or paste a URL to have it explained.</p>
@@ -76,19 +76,25 @@
     </div>
 
     <script>
+        // --- Logic for the Loading Spinner ---
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function() {
                 document.getElementById('loader').style.display = 'block';
             });
         });
 
+        // --- Markdown Rendering Logic ---
         document.querySelectorAll('.chat-bubble').forEach(bubble => {
             let rawMarkdown = bubble.innerText;
+            // Rule for bullet points (*)
             rawMarkdown = rawMarkdown.replace(/ \* /g, '\n* ');
+            // Rule for numbered lists (1., 2., etc.)
             rawMarkdown = rawMarkdown.replace(/ (\d+)\. /g, '\n$1. ');
+            // Now, parse the fully corrected Markdown
             bubble.innerHTML = marked.parse(rawMarkdown);
         });
 
+        // --- Auto-scroll to the bottom of the chat ---
         const chatContainer = document.querySelector('.chat-container');
         if(chatContainer) {
             chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -98,23 +104,56 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         function setupSpeechRecognition(micButtonId, inputFieldId) {
-            // ... (previous speech recognition code remains unchanged)
+            const micBtn = document.getElementById(micButtonId);
+            const inputField = document.getElementById(inputFieldId);
+            
+            if (SpeechRecognition && micBtn) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                micBtn.addEventListener('click', () => {
+                    recognition.start();
+                    micBtn.textContent = '🔴'; // Indicate recording
+                });
+
+                recognition.onresult = (event) => {
+                    const speechResult = event.results[0][0].transcript;
+                    inputField.value = speechResult;
+                };
+
+                recognition.onspeechend = () => {
+                    recognition.stop();
+                    micBtn.textContent = '🎤';
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech recognition error", event.error);
+                    micBtn.textContent = '🎤';
+                };
+            } else {
+                if (micBtn) micBtn.style.display = 'none';
+                console.log("Speech Recognition Not Available");
+            }
         }
         
         setupSpeechRecognition('mic-btn', 'topic');
         setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
 
-        // --- NEW: Text-to-Speech Logic ---
+        // --- Text-to-Speech Logic ---
         const synth = window.speechSynthesis;
 
         document.querySelectorAll('.speak-btn').forEach(button => {
             button.addEventListener('click', function() {
+                // Find the parent bubble to get its text content
                 const bubble = this.closest('.chat-bubble');
                 // We need to re-grab the innerText AFTER markdown parsing
                 const textToSpeak = bubble.innerText;
 
                 if (synth.speaking) {
-                    synth.cancel(); // Stop any current speech
+                    synth.cancel(); // Stop any current speech before starting new
                 }
                 
                 if (textToSpeak) {

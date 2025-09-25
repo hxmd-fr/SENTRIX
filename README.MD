@@ -1,4 +1,4 @@
-## SENTRIX - Explain It To Me 💡
+# SENTRIX - Explain It To Me 💡
 SENTRIX is an intelligent, multi-modal web application designed to break down complex topics into simple, easy-to-understand explanations. Using the power of Google's Gemini API and a local zero-shot classification model, this tool can explain concepts from text, images, or even entire webpages. It features a conversational interface, allowing users to ask follow-up questions and dive deeper into any subject.
 
 ## Features
@@ -49,35 +49,30 @@ This project is built with a modern Python and JavaScript stack.
 
   Virtual Environment (venv)
 
-## Setup and Installation
+# Setup and Installation
 Follow these steps to get the project running on your local machine.
 
-Clone the Repository:
+## Clone the Repository:
 ```
-Bash
-
-git clone https://github.com/hxmd-fr/eli5_app.git
-cd eli5_app
-Create and Activate a Virtual Environment:
-
+git clone https://github.com/hxmd-fr/SENTRIX.git
+cd SENTRIX
 ```
+
+
+## Create the venv
+```python3 -m venv venv```
+
+## Activate on Windows
+```.\venv\Scripts\activate```
+
+## Activate on macOS/Linux
 ```
-Bash
-
-# Create the venv
-python3 -m venv venv
-
-# Activate on Windows
-.\venv\Scripts\activate
-
-# Activate on macOS/Linux
 source venv/bin/activate
 Install Dependencies:
 All required packages are listed in requirements.txt. Install them with pip.
 ```
+## Requirements
 ```
-Bash
-
 pip install -r requirements.txt
 Note: The transformers library will download the pre-trained model files (approx. 1.6 GB) the first time it is run.
 
@@ -85,14 +80,15 @@ Create an Environment File:
 Create a file named .env in the root of the project directory. This file will hold your secret API key. Add your Gemini API key to this file:
 
 GEMINI_API_KEY=YOUR_API_KEY_HERE
-## How to Run
+```
+# How to Run
 With your virtual environment active and your .env file created, running the application is simple.
-```
-```
-Bash
-Run the Flask App:
 
-flask run
-Open in Browser:
-Navigate to http://127.0.0.1:5000 in your web browser to use the application.
 ```
+Run the Flask App:
+flask run
+```
+## Open in Browser
+
+Navigate to http://127.0.0.1:5000 in your web browser to use the application.
+

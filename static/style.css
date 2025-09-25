@@ -1,4 +1,171 @@
-/* Add this to the end of your style.css file */
+/* General Body and Container Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Align to top */
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 700px;
+    text-align: center;
+}
+
+h1 {
+    color: #1a237e;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #555;
+    margin-bottom: 30px;
+}
+
+/* Form Styles */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-weight: 600;
+    margin-top: 15px;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+input[type="text"],
+input[type="url"] {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.difficulty-options {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    margin-top: 10px;
+}
+
+.difficulty-options label {
+    cursor: pointer;
+    margin-top: 0;
+}
+
+button[type="submit"] {
+    background-color: #3949ab;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 20px;
+}
+
+button[type="submit"]:hover {
+    background-color: #1a237e;
+}
+
+/* Chat Interface Styles */
+.chat-container {
+    margin-top: 30px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.chat-message {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.chat-message.user {
+    justify-content: flex-end;
+}
+
+.chat-message.model {
+    justify-content: flex-start;
+}
+
+.chat-bubble {
+    max-width: 80%;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: left;
+    position: relative;
+    padding-bottom: 40px; /* Space for buttons */
+}
+
+.chat-message.user .chat-bubble {
+    background-color: #3949ab;
+    color: white;
+}
+
+.chat-message.model .chat-bubble {
+    background-color: #e8eaf6;
+    color: #333;
+    border-left: 5px solid #3949ab;
+}
+
+/* Follow-up Form Styles */
+.follow-up-form {
+    display: flex;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.follow-up-form input {
+    flex-grow: 1;
+}
+
+.follow-up-form button {
+    padding: 10px 20px;
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.start-new-btn {
+    display: inline-block;
+    margin-top: 20px;
+    color: #3949ab;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Voice and TTS Button Styles */
+.input-with-mic {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mic-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
 .speak-btn {
     position: absolute;
     bottom: 10px;
@@ -15,7 +182,18 @@
     opacity: 1;
 }
 
-.chat-bubble {
-    /* Add padding to the bottom to make space for the button */
-    padding-bottom: 40px;
+/* Loader Animation */
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3949ab;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 30px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
