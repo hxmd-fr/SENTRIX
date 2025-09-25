@@ -1,4 +1,3 @@
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import os
 from flask import Flask, render_template, request, session # NEW: import session
 from dotenv import load_dotenv
