@@ -1,94 +1,72 @@
-# SENTRIX - Explain It To Me 💡
-SENTRIX is an intelligent, multi-modal web application designed to break down complex topics into simple, easy-to-understand explanations. Using the power of Google's Gemini API and a local zero-shot classification model, this tool can explain concepts from text, images, or even entire webpages. It features a conversational interface, allowing users to ask follow-up questions and dive deeper into any subject.
+# 🤖SENTRIX - AI Research Assistant
+This project is a web-based AI agent that automates the research process. Given a single research goal, the agent autonomously searches the web for relevant sources, scrapes their content, and synthesizes the information into a comprehensive, well-formatted report.
 
-## Features
-- Multi-Modal Input: Get explanations for a typed topic, an uploaded image, or a webpage URL.
+## Key Features
+Autonomous Research: Provide a high-level goal, and the agent handles the entire research workflow.
 
-- Variable Difficulty: Choose the complexity of the explanation, with levels for a "5-Year-Old," "Teenager," or "College Student."
+Dynamic Source-Finding: Uses the SerpApi service to perform real-time Google searches for the most relevant and up-to-date articles.
 
-- Intelligent Topic Classification: A pre-trained Transformer model analyzes text topics to provide better context to the AI, resulting in more relevant explanations.
+Web Content Extraction: Automatically scrapes and parses the text content from multiple source URLs.
 
-- Confidence Thresholding: The topic classifier gracefully handles out-of-scope topics by defaulting to a "General" category if its confidence is low.
+AI-Powered Synthesis: Leverages the Google Gemini API to read the collected information and generate a cohesive, structured report.
 
-- Conversational Memory: Ask follow-up questions and the AI will remember the context of the original topic.
-
-- Voice I/O:
-
-  Voice-to-Text: Use your microphone to speak your topic or follow-up question.
-
-- Text-to-Speech: Listen to the AI's explanations read aloud.
-
-- Responsive UI: A clean, modern, and mobile-friendly user interface with a loading spinner and interactive elements.
-
-- Markdown Rendering: Correctly formats the AI's responses, including bold text, bullet points, and numbered lists.
+Markdown Formatting: The final report is formatted with Markdown for clear headings, lists, and structure.
 
 ## Tech Stack
-This project is built with a modern Python and JavaScript stack.
+### Backend
+Framework: Flask
 
-- Backend:
+AI Service: Google Gemini API (gemini-1.5-flash-latest)
 
-  Framework: Flask
+Web Search: SerpApi (google-search-results)
 
-  AI Service: Google Gemini API (gemini-1.5-flash-latest)
+Web Scraping: requests & BeautifulSoup4
 
-  Local ML Model: Hugging Face transformers with facebook/bart-large-mnli for zero-shot classification.
+### Frontend
+Structure: HTML5, CSS3
 
-  Web Scraping: requests & BeautifulSoup4
+Interactivity: Vanilla JavaScript
 
-- Frontend:
+Markdown Rendering: Marked.js
 
-  HTML5, CSS3, JavaScript
-
-  Markdown Rendering: Marked.js
-
-  Speech APIs: Web Speech API (for both SpeechRecognition and SpeechSynthesis)
-
-- Environment:
-
-  Python 3.x
-
-  Virtual Environment (venv)
-
-# Setup and Installation
+## Getting Started
 Follow these steps to get the project running on your local machine.
 
-## Clone the Repository:
+### Prerequisites
 ```
-git clone https://github.com/hxmd-fr/SENTRIX.git
+Python 3.8+
+
+A Google Gemini API Key.
+
+A SerpApi API Key.
+```
+
+### Installation
+Clone the Repository
+```
+git clone https://github.com/hxmd-fr/SENTRIX
 cd SENTRIX
 ```
+### Create and Activate a Virtual Environment
 
-
-## Create the venv
 ```python3 -m venv venv```
 
-## Activate on Windows
+### Activate on Windows
 ```.\venv\Scripts\activate```
 
-## Activate on macOS/Linux
-```
-source venv/bin/activate
-Install Dependencies:
-All required packages are listed in requirements.txt. Install them with pip.
-```
-## Requirements
-```
-pip install -r requirements.txt
-Note: The transformers library will download the pre-trained model files (approx. 1.6 GB) the first time it is run.
+### Activate on macOS/Linux
+```source venv/bin/activate```
 
-Create an Environment File:
-Create a file named .env in the root of the project directory. This file will hold your secret API key. Add your Gemini API key to this file:
+## Install Dependencies
 
-GEMINI_API_KEY=YOUR_API_KEY_HERE
+```pip install -r requirements.txt``` <br>
+Set Up Environment File <br>
+Create a file named .env in the root of the project and add your API keys:
 ```
-# How to Run
-With your virtual environment active and your .env file created, running the application is simple.
-
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY_HERE
+SERPAPI_API_KEY=YOUR_SERPAPI_API_KEY_HERE
 ```
-Run the Flask App:
-flask run
-```
-## Open in Browser
-
-Navigate to http://127.0.0.1:5000 in your web browser to use the application.
-
+## How to Run
+With your virtual environment active, start the Flask development server:
+```flask run``` <br>
+The application will be available at http://127.0.0.1:5000.

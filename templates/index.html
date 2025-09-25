@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENTRIX-ELI</title>
+    <title>SENTRIX - AI Research Assistant</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,157 +11,275 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>SENTRIX - Explain It To Me 💡</h1>
-        
-        {% if not chat_history %}
-        <p class="subtitle">Enter a topic, upload an image, or paste a URL to have it explained.</p>
-        
-        <form id="main-form" action="/" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="new_topic_form" value="true">
-            
-            <label for="topic">Enter a Topic:</label>
-            <div class="input-with-mic">
-                <input type="text" id="topic" name="topic" placeholder="e.g., Quantum Physics...">
-                <button type="button" id="mic-btn" class="mic-btn">🎤</button>
-            </div>
+    <div class="theme-select-wrapper">
+        <select id="theme-select">
+            <option value="light">☀️ Light</option>
+            <option value="dark">🌙 Dark</option>
+        </select>
+    </div>
 
-            <label for="image_file">Or Upload Image:</label>
-            <input type="file" id="image_file" name="image_file" accept="image/*">
-            
-            <label for="url">Or Explain a Webpage URL:</label>
-            <input type="url" id="url" name="url" placeholder="https://en.wikipedia.org/wiki/...">
-            
-            <label>Explain it like I'm a:</label>
-            <div class="difficulty-options">
-                <input type="radio" id="kid" name="difficulty" value="5-year-old child" checked>
-                <label for="kid">5-Year-Old</label>
-                <input type="radio" id="teenager" name="difficulty" value="teenager">
-                <label for="teenager">Teenager</label>
-                <input type="radio" id="expert" name="difficulty" value="college student studying the topic">
-                <label for="expert">College Student</label>
-            </div>
-            
-            <button type="submit">Explain!</button>
-        </form>
-        {% endif %}
+    <div class="container">
+        <h1>SENTRIX - AI Research Assistant 🤖</h1>
+        
+        <div id="initial-form-container">
+            {% if not chat_history %}
+            <p class="subtitle">Give me a research goal, and I'll find sources and write a report for you.</p>
+            <form id="main-form" action="/generate" method="POST">
+                <input type="hidden" name="new_topic_form" value="true">
+                <label for="research_goal">Your Research Goal:</label>
+                <div class="input-with-mic">
+                    <textarea id="research_goal" name="research_goal" rows="3" placeholder="e.g., Write a brief report on..."></textarea>
+                    <button type="button" id="mic-btn" class="mic-btn">🎤</button>
+                </div>
+                <button type="submit">Generate Report</button>
+            </form>
+            {% endif %}
+        </div>
 
         <div id="loader" class="loader" style="display: none;"></div>
         
-        <div class="chat-container">
+        <div id="chat-container" class="chat-container">
             {% for message in chat_history %}
                 <div class="chat-message {{ message.role }}">
-                    <div class="chat-bubble">
+                    <div class="chat-bubble" data-raw-text="{{ message.parts[0] }}">
                         {{ message.parts[0] }}
                     </div>
                 </div>
             {% endfor %}
         </div>
 
-        {% if chat_history %}
-        <form id="follow-up-form" class="follow-up-form" action="/" method="POST">
-            <input type="hidden" name="follow_up_form" value="true">
-            <div class="input-with-mic">
-                <input type="text" id="follow-up-input" name="follow_up" placeholder="Ask a follow-up question..." required>
-                <button type="button" id="follow-up-mic-btn" class="mic-btn">🎤</button>
-            </div>
-            <button type="submit">→</button>
-        </form>
-        <a href="/" class="start-new-btn">Start New Topic</a>
-        {% endif %}
-        
+        <div id="controls-container">
+             {% if chat_history %}
+                <form id="follow-up-form" action="/follow-up" method="POST">
+                    <input type="hidden" name="follow_up_form" value="true">
+                    <div class="input-with-mic">
+                        <input type="text" id="follow-up-input" name="follow_up" placeholder="Ask a follow-up question..." required>
+                        <button type="button" id="follow-up-mic-btn" class="mic-btn">🎤</button>
+                    </div>
+                    <button type="submit">→</button>
+                </form>
+                <div class="action-buttons">
+                    <button id="pdf-btn" class="action-btn">📄 Generate PDF</button>
+                    <a href="/download-report" download="ai_report.md" class="action-btn">📥 Download Report</a>
+                    <a href="/" class="action-btn">✨ Start New Topic</a>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <script>
-        // --- Logic for the Loading Spinner ---
-        document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function() {
-                document.getElementById('loader').style.display = 'block';
-            });
-        });
-
-        // --- UPDATED LOGIC FOR MARKDOWN AND TTS ---
-        const synth = window.speechSynthesis;
-
-        document.querySelectorAll('.chat-bubble').forEach(bubble => {
-            // Store the raw text before formatting
-            let rawText = bubble.innerText;
-
-            // Pre-process for Markdown lists
-            let markdownText = rawText.replace(/ \* /g, '\n* ');
-            markdownText = markdownText.replace(/ (\d+)\. /g, '\n$1. ');
-            
-            // Render the Markdown
-            bubble.innerHTML = marked.parse(markdownText);
-            
-            // Re-add the speaker button if it's a model bubble
-            if (bubble.closest('.chat-message.model')) {
-                const speakBtn = document.createElement('button');
-                speakBtn.className = 'speak-btn';
-                speakBtn.title = 'Read Aloud';
-                speakBtn.innerHTML = '🔊';
-                
-                // Add the click listener that uses the original, clean text
-                speakBtn.addEventListener('click', function() {
-                    if (synth.speaking) {
-                        synth.cancel();
-                    }
-                    const utterance = new SpeechSynthesisUtterance(rawText);
-                    utterance.lang = 'en-US';
-                    synth.speak(utterance);
-                });
-                
-                bubble.appendChild(speakBtn);
-            }
-        });
-
-        // --- Auto-scroll to the bottom of the chat ---
-        const chatContainer = document.querySelector('.chat-container');
-        if(chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        // --- THEME SWITCHER LOGIC ---
+        const themeSelect = document.getElementById('theme-select');
+        const currentTheme = localStorage.getItem('theme');
+        function setTheme(theme) {
+            document.body.classList.toggle('dark-theme', theme === 'dark');
+            themeSelect.value = theme;
+            localStorage.setItem('theme', theme);
         }
+        if (currentTheme) { setTheme(currentTheme); } else { setTheme('light'); }
+        themeSelect.addEventListener('change', (e) => { setTheme(e.target.value); });
 
-        // --- Voice-to-Text Logic ---
+        // --- VOICE-TO-TEXT LOGIC ---
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
         function setupSpeechRecognition(micButtonId, inputFieldId) {
             const micBtn = document.getElementById(micButtonId);
             const inputField = document.getElementById(inputFieldId);
+            if (!micBtn || !inputField) return;
             
-            if (SpeechRecognition && micBtn) {
+            if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.continuous = false;
                 recognition.lang = 'en-US';
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-
                 micBtn.addEventListener('click', () => {
                     recognition.start();
-                    micBtn.textContent = '🔴'; // Indicate recording
+                    micBtn.textContent = '🔴';
                 });
-
                 recognition.onresult = (event) => {
-                    const speechResult = event.results[0][0].transcript;
-                    inputField.value = speechResult;
+                    inputField.value = event.results[0][0].transcript;
                 };
-
                 recognition.onspeechend = () => {
                     recognition.stop();
                     micBtn.textContent = '🎤';
                 };
-
                 recognition.onerror = (event) => {
                     console.error("Speech recognition error", event.error);
                     micBtn.textContent = '🎤';
                 };
             } else {
-                if (micBtn) micBtn.style.display = 'none';
-                console.log("Speech Recognition Not Available");
+                if(micBtn) micBtn.style.display = 'none';
+            }
+        }
+        setupSpeechRecognition('mic-btn', 'research_goal');
+        setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
+        
+        // --- FORM SUBMISSION & STREAMING LOGIC ---
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const loader = document.getElementById('loader');
+            
+            loader.style.display = 'block';
+            if (form.id === 'main-form') {
+                document.getElementById('initial-form-container').style.display = 'none';
+            }
+            
+            const userInput = formData.get('research_goal') || formData.get('follow_up');
+            appendMessage('user', userInput);
+            if(form.id === 'follow-up-form') form.reset();
+
+            const modelBubble = appendMessage('model', '');
+            
+            fetch(form.action, { method: 'POST', body: formData })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    function read() {
+                        reader.read().then(({ done, value }) => {
+                            if (done) {
+                                loader.style.display = 'none';
+                                renderBubbleContent(modelBubble);
+                                showControls(modelBubble);
+                                return;
+                            }
+                            const chunk = decoder.decode(value, { stream: true });
+                            modelBubble.dataset.rawText = (modelBubble.dataset.rawText || '') + chunk;
+                            renderBubbleContent(modelBubble, true);
+                            read();
+                        });
+                    }
+                    read();
+                });
+        }
+        document.getElementById('main-form')?.addEventListener('submit', handleFormSubmit);
+        document.getElementById('follow-up-form')?.addEventListener('submit', handleFormSubmit);
+        
+        // --- DYNAMIC CONTENT & UTILITY FUNCTIONS ---
+        const synth = window.speechSynthesis;
+        function appendMessage(role, text) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${role}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble';
+            bubble.dataset.rawText = text;
+            bubble.innerText = text;
+            messageDiv.appendChild(bubble);
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return bubble;
+        }
+
+        function renderBubbleContent(bubble, isStreaming = false) {
+            const rawText = bubble.dataset.rawText || bubble.innerText;
+            if (!rawText && isStreaming) return;
+            
+            let markdownText = rawText.replace(/ \* /g, '\n* ').replace(/ (\d+)\. /g, '\n$1. ');
+            bubble.innerHTML = marked.parse(markdownText);
+            
+            processCitations(bubble);
+
+            if (bubble.closest('.chat-message.model')) {
+                const speakBtn = document.createElement('button');
+                speakBtn.className = 'speak-btn';
+                speakBtn.title = 'Read Aloud';
+                speakBtn.innerHTML = '🔊';
+                speakBtn.addEventListener('click', () => {
+                    if (synth.speaking) synth.cancel();
+                    const utterance = new SpeechSynthesisUtterance(rawText);
+                    synth.speak(utterance);
+                });
+                bubble.appendChild(speakBtn);
             }
         }
         
-        setupSpeechRecognition('mic-btn', 'topic');
-        setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
+        function processCitations(bubble) {
+            const sourcesHeader = Array.from(bubble.querySelectorAll('h2, h3')).find(h => h.innerText.trim().toLowerCase() === 'sources');
+            if (!sourcesHeader) return;
+            const sourceList = sourcesHeader.nextElementSibling;
+            if (!sourceList || (sourceList.tagName !== 'OL' && sourceList.tagName !== 'UL')) return;
+
+            const sourceLinks = {};
+            sourceList.querySelectorAll('li').forEach((li, index) => {
+                const sourceId = `source-${index + 1}`;
+                li.id = sourceId;
+                const a = li.querySelector('a');
+                if (a) sourceLinks[index + 1] = a.href;
+            });
+
+            bubble.innerHTML = bubble.innerHTML.replace(/\[Source (\d+)\]/g, (match, p1) => {
+                const sourceId = `source-${p1}`;
+                if (sourceLinks[p1]) {
+                    return `<a href="#${sourceId}" class="citation-link">${match}</a>`;
+                }
+                return match;
+            });
+        }
+
+        function showPdfPrompt(reportBubble) {
+            const promptContainer = document.createElement('div');
+            promptContainer.className = 'pdf-prompt';
+            promptContainer.innerHTML = `<p>Do you want to generate a PDF?</p><div class="pdf-buttons"><button id="pdf-yes-btn" class="action-btn">Yes</button><button id="pdf-no-btn" class="action-btn">No</button></div>`;
+            reportBubble.appendChild(promptContainer);
+
+            document.getElementById('pdf-yes-btn').addEventListener('click', async () => {
+                promptContainer.innerHTML = '<p>Generating PDF...</p>';
+                const reportText = reportBubble.dataset.rawText;
+                const response = await fetch('/generate-pdf', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ text: reportText })
+                });
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ai_report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                promptContainer.innerHTML = '<p>PDF downloaded!</p>';
+            });
+
+            document.getElementById('pdf-no-btn').addEventListener('click', () => promptContainer.remove());
+        }
+        
+        function showControls(modelBubble) {
+            let controlsContainer = document.getElementById('controls-container');
+//            if (controlsContainer.innerHTML.trim() === '') {
+                controlsContainer.innerHTML = `
+                    <form id="follow-up-form" action="/follow-up" method="POST">
+                        <input type="hidden" name="follow_up_form" value="true">
+                        <div class="input-with-mic">
+                            <input type="text" id="follow-up-input" name="follow_up" placeholder="Ask a follow-up question..." required>
+                            <button type="button" id="follow-up-mic-btn" class="mic-btn">🎤</button>
+                        </div>
+                        <button type="submit">→</button>
+                    </form>
+                    <div class="action-buttons">
+                        <button id="pdf-btn" class="action-btn">📄 Generate PDF</button>
+                        <a href="/download-report" download="ai_report.md" class="action-btn">📥 Download Report</a>
+                        <a href="/" class="action-btn">✨ Start New Topic</a>
+                    </div>
+                `;
+                document.getElementById('follow-up-form').addEventListener('submit', handleFormSubmit);
+                setupSpeechRecognition('follow-up-mic-btn', 'follow-up-input');
+                document.getElementById('pdf-btn').addEventListener('click', () => {
+                    const lastModelBubble = document.querySelector('.chat-message.model:last-child .chat-bubble');
+                    if (lastModelBubble) showPdfPrompt(lastModelBubble);
+                });
+            //}
+        }
+
+        // Initial render for any pre-loaded chat history
+        document.querySelectorAll('.chat-bubble').forEach(b => {
+            renderBubbleContent(b);
+            if(b.closest('.chat-message.model:last-child')) {
+                showControls(b);
+            }
+        });
     </script>
 </body>
 </html>
