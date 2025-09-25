@@ -16,12 +16,11 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Create a Flask web application
 app = Flask(__name__)
-# NEW: Set a secret key for session management.
-# In a real app, use a more complex, random key.
+
 app.secret_key = 'your_super_secret_key'
 
 
-# Create the Gemini Pro model
+# Create the Gemini model
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 def get_text_from_url(url):
