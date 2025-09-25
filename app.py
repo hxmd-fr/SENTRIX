@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, session # NEW: import session
+from flask import Flask, render_template, request, session
 from dotenv import load_dotenv
 import google.generativeai as genai
 from PIL import Image
@@ -16,14 +16,14 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Create a Flask web application
 app = Flask(__name__)
-
+# Set a secret key for session management
 app.secret_key = 'your_super_secret_key'
 
-
-# Create the Gemini model
+# Create the Gemini Pro model
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 def get_text_from_url(url):
+    """Fetches and extracts paragraph text from a webpage."""
     try:
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -35,14 +35,14 @@ def get_text_from_url(url):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # NEW: Initialize or clear chat history at the start
+    # Initialize or clear chat history at the start
     if 'chat_history' not in session or request.method == 'GET':
         session['chat_history'] = []
 
     if request.method == 'POST':
         # Check if it's a new topic or a follow-up
         if 'new_topic_form' in request.form:
-            session.clear() # Clear history for a new topic
+            session.clear()
             session['chat_history'] = []
             
             topic = request.form.get('topic')
@@ -56,7 +56,7 @@ def index():
             if url:
                 webpage_text = get_text_from_url(url)
                 if webpage_text:
-                    user_message = f"Explain this article about '{url}'"
+                    user_message = f"Explain this article: {url}"
                     initial_prompt = f"Explain the key points of the following article to me like I'm a {difficulty}: {webpage_text[:4000]}"
                 else:
                     return render_template('index.html', error="Sorry, I couldn't read the content from that URL.")
@@ -65,7 +65,7 @@ def index():
                 user_message = "Explain this image."
                 initial_prompt = [f"Explain the concept in this image to me like I'm a {difficulty}.", img]
             elif topic:
-                user_message = f"Explain '{topic}'"
+                user_message = f"Explain: '{topic}'"
                 candidate_labels = ["Science", "History", "Technology", "Art", "Health", "Finance"]
                 predicted_label, score = classify_topic(topic, candidate_labels)
                 final_category = predicted_label if score > 0.5 else "General"
